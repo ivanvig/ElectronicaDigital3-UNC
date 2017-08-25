@@ -16,36 +16,37 @@
 
 void Init(void);
 
-#define AddrFIO2DIR 0x2009C040
-#define AddrFIO2PIN 0x2009C054
-#define AddrFIO2SET 0x2009C058
-#define AddrFIO2CLR 0x2009C05C
+#define AddrFIO0DIR 0x2009C000
+#define AddrFIO0PIN 0x2009C014
+#define AddrFIO0SET 0x2009C018
+#define AddrFIO0CLR 0x2009C01C
 
-unsigned int volatile *const FIO2DIR = (unsigned int*) AddrFIO2DIR;
-unsigned int volatile *const FIO2PIN = (unsigned int*) AddrFIO2PIN;
-unsigned int volatile *const FIO2SET = (unsigned int*) AddrFIO2SET;
-unsigned int volatile *const FIO2CLR = (unsigned int*) AddrFIO2CLR;
+unsigned int volatile *const FIO0DIR = (unsigned int*) AddrFIO0DIR;
+unsigned int volatile *const FIO0PIN = (unsigned int*) AddrFIO0PIN;
+unsigned int volatile *const FIO0SET = (unsigned int*) AddrFIO0SET;
+unsigned int volatile *const FIO0CLR = (unsigned int*) AddrFIO0CLR;
 
 
 int main(void) {
 
-	int porc = 0;
-	int k = 100;
 	Init();
-
+	int porc = 0;
+	int k = 50;
+	int x;
 	while(1){
-		*FIO2SET = 1;
+		*FIO0SET = (1 << 22);
 		for(int i = 0; i < k*porc; i++);
-		*FIO2CLR = 1;
-		for(int i = 0; i < k*(1-porc); i++);
-		if(!(*FIO2PIN & 1 << 1)){
+		*FIO0CLR = (1 << 22);
+		for(int i = 0; i < k*(100-porc); i++);
+		if(!(*FIO0PIN & 1 << 1) && x > 10){
 			porc = (porc + 25)%125;
+			x = 0;
 		}
+		x++;
 	}
-
     return 0 ;
 }
 
 void Init(){
-	*FIO2DIR = 1;
+	*FIO0DIR |= (1 << 22);
 }

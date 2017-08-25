@@ -10,8 +10,10 @@ void Init(void);
 #define AddrFIO2PIN 0x2009C054 //Definido como salida en la funcion Init()
 #define AddrFIO2SET 0x2009C058
 #define AddrFIO2CLR 0x2009C05C
+#define AddrFIO0PIN 0x2009C014
 
 unsigned int volatile *const FIO2DIR = (unsigned int*) AddrFIO2DIR;
+unsigned int volatile *const FIO0PIN = (unsigned int*) AddrFIO0PIN;
 unsigned int volatile *const FIO2PIN = (unsigned int*) AddrFIO2PIN;
 unsigned int volatile *const FIO2SET = (unsigned int*) AddrFIO2SET;
 unsigned int volatile *const FIO2CLR = (unsigned int*) AddrFIO2CLR;
@@ -32,21 +34,22 @@ unsigned int tabla[]= {
 					0x00000080,		//8 - 10000000
 					0x00000090};	//9 - 10010000
 
+	unsigned int num;			//Variable a mostrar
 
-	unsigned int num=90;		//Variable a mostrar
 	unsigned int display1=~tabla[0];	//LS Display
 	unsigned int display2=~tabla[0];	//MS Display
 
-
-	display1=~tabla[num%10];
-	display2=~tabla[(num/10)%10];
-
 	while(1){
+		if (*FIO0PIN & 0x20000000){//Pin 29 del puerto 0 en alto
+			num=(*FIO0PIN & 0x0000000f);
+			display1=~tabla[num%10];
+			display2=~tabla[(num/10)%10];
+		}
 		*FIO2PIN = display1;
-		*FIO2CLR = (1<<8);
+		*FIO2CLR = (1<<10);
 	for(unsigned int i=0;i<1000;i++);
 		*FIO2PIN = display2;
-		*FIO2CLR = (1<<10);
+		*FIO2CLR = (1<<8);
 	for(unsigned int i=0;i<1000;i++);
 	}
 }
