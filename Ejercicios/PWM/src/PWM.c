@@ -1,13 +1,3 @@
-/*
-===============================================================================
- Name        : PWM.c
- Author      : $(author)
- Version     :
- Copyright   : $(copyright)
- Description : main definition
-===============================================================================
-*/
-
 #ifdef __USE_CMSIS
 #include "LPC17xx.h"
 #endif
@@ -25,7 +15,6 @@ unsigned int volatile *const FIO0DIR = (unsigned int*) AddrFIO0DIR;
 unsigned int volatile *const FIO0PIN = (unsigned int*) AddrFIO0PIN;
 unsigned int volatile *const FIO0SET = (unsigned int*) AddrFIO0SET;
 unsigned int volatile *const FIO0CLR = (unsigned int*) AddrFIO0CLR;
-
 
 int main(void) {
 
