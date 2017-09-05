@@ -105,6 +105,7 @@ void EINT0_IRQHandler(void){
 	}else{
 		*T0MR0 = *Tbajo;
 		*T0MR1 = *Talto;
+		i = 0;
 	}
 	i++;
 	*EXTINT |= 1;			//Bajo la INTRP
