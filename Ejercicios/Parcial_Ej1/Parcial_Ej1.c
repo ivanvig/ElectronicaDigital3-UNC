@@ -74,8 +74,8 @@ void Init(){
 	*EXTPOLAR|= 1;			//0 - Por flanco de bajada / 1 - Por flanco de subida
 	*EXTINT  |= 1;
 	//Timer
- 	*T0MR0 = *Tbajo;			//MR0 en 25 Mega
-	*T0MR1 = *Talto;			//MR1 en 75 Mega
+ 	*T0MR0 = *Tbajo;			//MR0
+	*T0MR1 = *Talto;			//MR1
 	*T0MCR = 0x00000000;		//Borro el registro entero porque no se resetea el HDMP cuando debuggeas un nuevo programa
  	*T0MCR |= (1<<0);			//Genera una interrupción cuando hay match entre MR0 y TC
  	*T0MCR |= (1<<3);			//Genera una interrupción cuando hay match entre MR1 y TC
@@ -106,5 +106,6 @@ void EINT0_IRQHandler(void){
 		*T0MR0 = *Tbajo;
 		*T0MR1 = *Talto;
 	}
+	i++;
 	*EXTINT |= 1;			//Bajo la INTRP
 }
