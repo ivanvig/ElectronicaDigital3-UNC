@@ -5,8 +5,8 @@
 #include <cr_section_macros.h>
 
 void Init(void);
-static int i = 1;
-static int por = 0;
+static unsigned int i = 1;
+static unsigned int por = 0;
 
 #define k 50
 #define offset 1000
@@ -28,6 +28,7 @@ static int por = 0;
 //NVIC
 #define AddrISER0   0xE000E100	//Habilitar las interrupciones
 //Timer
+#define AddrT0TC 	0x40004008
 #define AddrT0MR0   0x40004018	//Match Register 0. Se habilita vía MCR para resetear el TC, parar el TC y PC y/o generar una INTRP cada vez que MR0=TC
 #define AddrT0MR1   0x4000401C	//Match Register 1. Ver MR0.
 #define AddrT0IR    0x40004000	//Interrupt Register. Se escribe para limpiar INTRP. Se puede leer para identificar INTRP pendientes (8 posibles)
@@ -63,7 +64,7 @@ unsigned int volatile *const IO2IntEnF = (unsigned int*) AddrIO2IntEnF;
 unsigned int volatile *const IO2IntStatF = (unsigned int*) AddrIO2IntStatF;
 unsigned int volatile *const IO2IntClr = (unsigned int*) AddrIO2IntClr;
 unsigned int volatile *const IOIntStatus = (unsigned int*) AddrIOIntStatus;
-
+unsigned int volatile *const T0TC = (unsigned int*) AddrT0TC;
 
 
 void Init(void);
@@ -71,7 +72,8 @@ void Init(void);
 int main(void) {
 	Init();
 
-	while(1){};
+	while(1){
+	};
     return 0;
 }
 
@@ -111,6 +113,7 @@ void TIMER0_IRQHandler (void){
 }
 
 void EINT3_IRQHandler(void){
+	for(int i=0;i<10000000;i++);
 	if(*IOIntStatus & 1){			//Interrupcion GPIO P0
 		if(por<100){
 			por+=25;
@@ -124,20 +127,25 @@ void EINT3_IRQHandler(void){
 	}
 	*T0MR0 = por*k;
 	*T0MR1 = (100-por)*k+*T0MR0+offset;
+	*T0TC = 0;
 }
 
 void EINT0_IRQHandler(void){
+	for(int i=0;i<10000000;i++);
 	if(*EXTINT & 1){
-		if(i){						//Parpadear
+		if(i & 1){						//Parpadear
 			*ISER0 &= ~(1<<21);		//Bajar INTRP por GPIO en ISER
 			*T0MR0 = 25000000;
 			*T0MR1 = 2*(*T0MR0);
+			*T0TC = 0;
 			i=~i;
 		}else{						//PWM
 			*ISER0 |= (1<<21);		//habilitar INTRP de GPIO en ISER
 			*T0MR0 = por*k;
 			*T0MR1 = (100-por)*k+*T0MR0+offset;
+			*T0TC = 0;
 			i=~i;
 		}
+		*EXTINT |= 1;
 	}
 }
