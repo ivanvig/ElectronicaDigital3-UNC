@@ -7,10 +7,10 @@
 void Init(void);
 static unsigned int i = 1;
 static unsigned int por = 0;
+static unsigned int flag = 0;
 
-#define k 50
-#define offset 1000
-
+#define offset 150
+#define tiempo 5000
 //Pins
 #define AddrFIO0DIR 0x2009C000
 #define AddrFIO0PIN 0x2009C014
@@ -73,6 +73,13 @@ int main(void) {
 	Init();
 
 	while(1){
+		while(flag){
+			flag--;
+			*EXTINT |= 1;
+			*T0TCR |= 1;
+		}
+		*ISER0 |= (1<<18);			//INTRP por EINT0
+		*ISER0 |= (1<<21);			//INTRP por EINT3 (GPIO)
 	};
     return 0;
 }
@@ -90,11 +97,12 @@ void Init(){
 	*EXTINT  |= 1;				//Baja INTRP
 	//Timer
 	*T0MCR = 0x00000000;		//Borro el registro entero porque no se resetea el HDMP cuando debuggeas un nuevo programa
- 	*T0MCR |= (1<<0);			//Genera una interrupción cuando hay match entre MR0 y TC
+ 	*T0MCR |= 1;				//Genera una interrupción cuando hay match entre MR0 y TC
  	*T0MCR |= (1<<3);			//Genera una interrupción cuando hay match entre MR1 y TC
 	*T0MCR |= (1<<4);			//Resetea TC en el match con MR1
-	*T0IR  |= (1<<0);			//Limpia la interrupcion de TMR0 MR0
+	*T0IR  |= 1;				//Limpia la interrupcion de TMR0 MR0
 	*T0IR  |= (1<<1);			//Limpia la interrupcion de TMR0 MR1
+	*T0MR1 = tiempo;			//Cargo MR0
 	*T0TCR |= 1;				//Cuando es 1, habilita el contador del Timer y del Prescaler
 	//NVIC
 	*ISER0 |= (1<<1);			//Habilita las interrupciones (el bit 1 es para timer 0)
@@ -104,16 +112,22 @@ void Init(){
 
 void TIMER0_IRQHandler (void){
 	if (*T0IR & 1){				//INTRP por MR0
-		*FIO0CLR = (1 << 22);	//Apagar LED
-		*T0IR |= (1<<0);		//Bajar INTRP de MR0
-	}else if (*T0IR & (1<<1)){
 		*FIO0SET = (1 << 22);	//Prender LED
-		*T0IR = (1<<1);			//Bajar INTRP de MR1
+		*T0IR |= 1;		//Bajar INTRP de MR0
+	}else if (*T0IR & (1<<1)){
+		*FIO0CLR = (1 << 22);	//Apagar LED
+		*T0IR |= (1<<1);		//Bajar INTRP de MR1
 	}
 }
 
 void EINT3_IRQHandler(void){
-	for(int i=0;i<10000000;i++);
+	*ISER0 &= ~(1<<21);			//INTRP por EINT3 (GPIO)
+	flag = 1000000000;
+
+
+	*T0TCR &= ~1;					//Deshabilitar timer
+	*T0TCR |= (1<<1);				//Resetea timer
+	//for(int i=0;i<2000000;i++);
 	if(*IOIntStatus & 1){			//Interrupcion GPIO P0
 		if(por<100){
 			por+=25;
@@ -125,27 +139,34 @@ void EINT3_IRQHandler(void){
 		}
 		*IO2IntClr |= 1;			//Bajar flag INRP GPIO P2.0
 	}
-	*T0MR0 = por*k;
-	*T0MR1 = (100-por)*k+*T0MR0+offset;
-	*T0TC = 0;
+	*T0MR0 = por*(*T0MR1/100)+offset;
+	*T0TCR |= 1;
+	*T0TCR &= ~(1<<1);
 }
 
 void EINT0_IRQHandler(void){
-	for(int i=0;i<10000000;i++);
+	*ISER0 &= ~(1<<18);			//INTRP por EINT0
+	flag = 1000000000;
+
+
+	*T0TCR &= ~1;					//Deshabilitar timer
+	*T0TCR |= (1<<1);				//Resetea timer
+	//for(int i=0;i<2000000;i++);
 	if(*EXTINT & 1){
-		if(i & 1){						//Parpadear
+		if(i & 1){					//Parpadear
 			*ISER0 &= ~(1<<21);		//Bajar INTRP por GPIO en ISER
 			*T0MR0 = 25000000;
 			*T0MR1 = 2*(*T0MR0);
-			*T0TC = 0;
 			i=~i;
 		}else{						//PWM
 			*ISER0 |= (1<<21);		//habilitar INTRP de GPIO en ISER
-			*T0MR0 = por*k;
-			*T0MR1 = (100-por)*k+*T0MR0+offset;
-			*T0TC = 0;
+			*T0MR0 = por*(*T0MR1/100)+offset;
+			*T0MR1 = tiempo;
 			i=~i;
 		}
+		*T0TCR |= 1;
+		*T0TCR &= ~(1<<1);
 		*EXTINT |= 1;
 	}
 }
+
