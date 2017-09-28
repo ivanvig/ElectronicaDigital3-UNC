@@ -19,7 +19,8 @@ unsigned int volatile *const FIO0CLR = (unsigned int*) AddrFIO0CLR;
 int main(void) {
 
 	Init();
-	int porc = 0;
+	int porc = 0;			*T0MR0 = 1;
+	*T0MR1 = 1000;
 	int k = 50;
 	int x;
 	while(1){
