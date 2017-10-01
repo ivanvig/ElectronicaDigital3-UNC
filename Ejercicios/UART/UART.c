@@ -3,7 +3,7 @@
 #endif
 #include <cr_section_macros.h>
 
-
+//putty.exe -serial <puerto> -sercfg 9600,8,n,1,N
 
 #define AddrPCONP		0x400FC0C4	//
 #define AddrPINSEL0		0x4002C000	//
